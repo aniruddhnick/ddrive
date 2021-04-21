@@ -1,18 +1,13 @@
 const http = require('http')
 const path = require('path')
 const fs = require('fs')
-const { replace } = require('lodash')
 const bot = require('./bot')
-const uploader = require('./helpers/uploader')
 const downloader = require('./helpers/downloader')
-const remover = require('./helpers/remover')
 
-const uploadLock = new Set()
 const downloadLock = new Set()
-const deleteLock = new Set()
 
 /** Load static files * */
-const homePage = fs.readFileSync('./html/index.html')
+// const homePage = fs.readFileSync('./html/index.html')
     .toString()
 const favicon = fs.readFileSync('./html/favicon.ico')
 
@@ -23,29 +18,6 @@ const convertToBase64 = payload => Buffer.from(JSON.stringify(payload)).toString
 const sendFavicon = (req, res) => {
     res.writeHead(200)
     res.end(favicon)
-}
-
-/** Upload file handler * */
-const handleUpload = async (container, req, res) => {
-    const { database, storageChannel } = container
-    const filename = replace(req.url.split('/')[1], ' ', '_')
-    if (database[filename] || uploadLock.has(filename)) {
-        res.writeHead(409)
-        res.end('file exist or being uploaded by someone else')
-    } else {
-        uploadLock.add(filename)
-        try {
-            const { files, name } = await uploader(req, filename, storageChannel)
-            database[name] = files
-        } catch (err) {
-            res.writeHead(500)
-            res.end('Internal server error')
-        } finally {
-            uploadLock.delete(filename)
-        }
-        res.writeHead(303, { Connection: 'close', Location: '/' })
-        res.end()
-    }
 }
 
 /** Download file handler * */
@@ -63,36 +35,10 @@ const handleDownload = async (container, req, res) => {
     }
 }
 
-/** Handle file delete * */
-const handleDelete = async (container, req, res) => {
-    const { database, storageChannel } = container
-    const fileName = req.url.split('/')[1]
-    if (!database[fileName]) {
-        res.writeHead(404)
-        res.end('404 not found')
-    } else if (uploadLock.has(fileName) || downloadLock.has(fileName) || deleteLock.has(fileName)) {
-        res.writeHead(409)
-        res.end('file is being uploaded, downloaded or deleted')
-    } else {
-        deleteLock.add(fileName)
-        try {
-            await remover(fileName, storageChannel)
-            delete database[fileName]
-        } catch (err) {
-            res.writeHead(500)
-            res.end()
-        } finally {
-            deleteLock.delete(fileName)
-        }
-
-        res.writeHead(200)
-        res.end()
-    }
-}
-
 /** Send homepage * */
 const generateHomepage = (container) => {
     const { database } = container
+    const homePage = fs.readFileSync('./html/index.html').toString()
     let files = Object.keys(database)
     files = files.map(file => `<p><a href="/${file}">${file}</a></p>`)
 
@@ -124,10 +70,6 @@ bot.build()
                         'Content-Length': 0,
                     })
                     res.end()
-                } else if (req.method === 'DELETE') {
-                    await handleDelete(container, req, res)
-                } else if (req.method === 'POST') {
-                    await handleUpload(container, req, res)
                 } else if (req.method === 'GET' && req.url.startsWith('/uri/')) {
                     await handleURI(container, req, res)
                 } else if (req.method === 'GET' && req.url !== '/') {
@@ -140,8 +82,9 @@ bot.build()
                     res.end('not found')
                 }
             } catch (err) {
+                console.log(err)
                 res.writeHead(500)
-                res.end('internal server error')
+                res.end('Internal server error')
             }
         }
 
