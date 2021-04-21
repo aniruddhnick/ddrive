@@ -4,11 +4,10 @@ const fs = require('fs')
 const bot = require('./bot')
 const downloader = require('./helpers/downloader')
 
-const downloadLock = new Set()
-
 /** Load static files * */
-// const homePage = fs.readFileSync('./html/index.html')
+const homePage = fs.readFileSync('./html/index.html')
     .toString()
+
 const favicon = fs.readFileSync('./html/favicon.ico')
 
 /** Convert Object to base64 * */
@@ -28,17 +27,14 @@ const handleDownload = async (container, req, res) => {
         res.status = 404
         res.end('404 not found')
     } else {
-        downloadLock.add(fileName)
         res.status = 200
         await downloader(res, database[fileName], fileName)
-        downloadLock.delete(fileName)
     }
 }
 
 /** Send homepage * */
 const generateHomepage = (container) => {
     const { database } = container
-    const homePage = fs.readFileSync('./html/index.html').toString()
     let files = Object.keys(database)
     files = files.map(file => `<p><a href="/${file}">${file}</a></p>`)
 
