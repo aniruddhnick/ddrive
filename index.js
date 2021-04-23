@@ -4,6 +4,10 @@ const fs = require('fs')
 const bot = require('./bot')
 const downloader = require('./helpers/downloader')
 
+let USERNAME
+let PASSWORD
+if (process.env.AUTH) [USERNAME, PASSWORD] = process.env.AUTH.split(':')
+
 /** Load static files * */
 const homePage = fs.readFileSync('./html/index.html')
     .toString()
@@ -12,6 +16,20 @@ const favicon = fs.readFileSync('./html/favicon.ico')
 
 /** Convert Object to base64 * */
 const convertToBase64 = payload => Buffer.from(JSON.stringify(payload)).toString('base64')
+
+const auth = (req) => {
+    // check for basic auth header
+    if (!req.headers.authorization || req.headers.authorization.indexOf('Basic ') === -1) {
+        return false
+    }
+
+    // verify auth credentials
+    const base64Credentials = req.headers.authorization.split(' ')[1]
+    const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii')
+    const [username, password] = credentials.split(':')
+
+    return !(username !== USERNAME || password !== PASSWORD)
+}
 
 /** send favicon * */
 const sendFavicon = (req, res) => {
@@ -54,6 +72,15 @@ const handleURI = (container, req, res) => {
 bot.build()
     .then((container) => {
         const onRequest = async (req, res) => {
+            /** Validate auth if enabled * */
+            if (USERNAME && PASSWORD && !auth(req)) {
+                res.setHeader('WWW-Authenticate', 'Basic realm="DDrive Access", charset="UTF-8"')
+                res.statusCode = 401
+                res.end('Unauthorized access')
+
+                return
+            }
+
             try {
                 if (req.url === '/favicon.ico') {
                     sendFavicon(req, res)
