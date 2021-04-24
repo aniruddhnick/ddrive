@@ -103,7 +103,7 @@ bot.build()
                 } else if (req.method === 'GET' && req.url !== '/') {
                     await handleDownload(container, req, res)
                 } else if (req.method === 'GET') {
-                    res.writeHead(200, { Connection: 'close' })
+                    res.writeHead(200, { Connection: 'close', 'Content-Type': 'text/html' })
                     res.end(generateHomepage(container))
                 } else {
                     res.writeHead(404)
