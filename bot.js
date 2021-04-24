@@ -9,9 +9,12 @@ module.exports.build = async () => {
     const spinner = ora('Starting bot').start()
     await bot.login(process.env.TOKEN)
     spinner.text = 'Building file index'
-    const storageChannel = await bot.channels.fetch(process.env.STORAGE_CHANNEL)
-    const database = await indexBuilder(storageChannel)
-    spinner.succeed('Bot is ready')
+    const container = {}
+    container.storageChannel = await bot.channels.fetch(process.env.STORAGE_CHANNEL)
+    indexBuilder(container.storageChannel).then((database) => {
+        container.database = database
+        spinner.succeed('Bot is ready')
+    })
 
-    return { database, storageChannel }
+    return container
 }

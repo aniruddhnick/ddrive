@@ -80,7 +80,12 @@ bot.build()
 
                 return
             }
+            if (!container.database) {
+                res.statusCode = 501
+                res.end('Building Index in progress')
 
+                return
+            }
             try {
                 if (req.url === '/favicon.ico') {
                     sendFavicon(req, res)
