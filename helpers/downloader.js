@@ -4,7 +4,6 @@ const ora = require('ora')
 
 module.exports = async (stream, files, fileName) => {
     const spinner = ora(`downloading ${fileName}`).start()
-
     try {
         // eslint-disable-next-line no-restricted-syntax
         for (const file of files) {
@@ -15,6 +14,7 @@ module.exports = async (stream, files, fileName) => {
         stream.end()
         spinner.succeed(`downloaded ${fileName}`)
     } catch (err) {
+        console.log(err)
         spinner.fail(`downloaded ${fileName} failed`)
         stream.writeHead(500, { Connection: 'close' })
         stream.end()

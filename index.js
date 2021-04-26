@@ -25,12 +25,12 @@ const sendFavicon = (req, res) => {
 const handleDownload = async (container, req, res) => {
     const { database } = container
     const fileName = path.basename(req.url)
-    if (!database.data[fileName].files) {
+    if (!database.data[fileName]) {
         res.status = 404
         res.end('404 not found')
     } else {
         res.status = 200
-        await downloader(res, database[fileName], fileName)
+        await downloader(res, database.data[fileName].files, fileName)
     }
 }
 
@@ -48,7 +48,7 @@ const generateHomepage = (container) => {
 const handleURI = (container, req, res) => {
     const { database } = container
     const fileName = path.basename(req.url)
-    const payload = { fileName, files: database[fileName] }
+    const payload = { fileName, files: database[fileName].files }
     res.writeHead(200)
     res.end(convertToBase64(payload))
 }
