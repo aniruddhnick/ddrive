@@ -54,7 +54,7 @@ const handleURI = (container, req, res) => {
 }
 
 const genIndex = async () => {
-    if (process.env.INDEX_DB) return JSON.parse(process.env.INDEX_DB)
+    if (process.env.INDEX_PATH) return JSON.parse(fs.readFileSync(process.env.INDEX_PATH).toString())
     const database = await request.get(process.env.CDN_URL, {
         auth: {
             user: process.env.CDN_USER,
