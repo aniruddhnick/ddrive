@@ -30,6 +30,7 @@ const handleDownload = async (container, req, res) => {
         res.end('404 not found')
     } else {
         res.status = 200
+        res.writeHead(200, { 'Content-Length': database.data[fileName].size })
         await downloader(res, database.data[fileName].files, fileName)
     }
 }
