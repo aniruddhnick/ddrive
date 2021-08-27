@@ -15,6 +15,24 @@ const favicon = fs.readFileSync('./html/favicon.ico')
 /** Convert Object to base64 * */
 const convertToBase64 = payload => Buffer.from(JSON.stringify(payload)).toString('base64')
 
+let USERNAME
+let PASSWORD
+if (process.env.AUTH) [USERNAME, PASSWORD] = process.env.AUTH.split(':')
+
+const auth = (req) => {
+    // check for basic auth header
+    if (!req.headers.authorization || req.headers.authorization.indexOf('Basic ') === -1) {
+        return false
+    }
+
+    // verify auth credentials
+    const base64Credentials = req.headers.authorization.split(' ')[1]
+    const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii')
+    const [username, password] = credentials.split(':')
+
+    return !(username !== USERNAME || password !== PASSWORD)
+}
+
 /** send favicon * */
 const sendFavicon = (req, res) => {
     res.writeHead(200)
@@ -73,6 +91,13 @@ const build = async () => {
     console.log(`==== Size => ${humanReadableSize(container.database.meta.size)}`)
     console.log(`==== Chunks => ${container.database.meta.length}`)
     const onRequest = async (req, res) => {
+        if (USERNAME && PASSWORD && !auth(req)) {
+            res.setHeader('WWW-Authenticate', 'Basic realm="MovieHub Access", charset="UTF-8"')
+            res.statusCode = 401
+            res.end('Unauthorized access')
+
+            return
+        }
         if (!container.database) {
             res.statusCode = 501
             res.end('Building Index in progress')
