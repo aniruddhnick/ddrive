@@ -23,7 +23,7 @@ class DiscordFS {
             channelId: opts.channelId,
         })
 
-        this.chunkSize = 7864320
+        this.chunkSize = 7864320 // 7.5 MB
         this.files = []
         this.directories = []
         this.uploadLock = new Set()

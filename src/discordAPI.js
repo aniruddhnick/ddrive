@@ -1,5 +1,6 @@
-const { REST } = require('@discordjs/rest')
+// const { REST } = require('@discordjs/rest')
 const querystring = require('querystring')
+const REST = require('./rest')
 
 class DiscordAPI {
     /**
